@@ -1,90 +1,43 @@
-// 1. UI HTML Inject Karna
-const widgetHTML = `
-    <div id="floatshield-pro-widget">
-        <div class="fs-header">
-            <div class="fs-title">🛡️ FloatShield Pro</div>
-            <button class="fs-close-btn" id="fs-close">✕</button>
-        </div>
-        <div class="fs-stats">
-            <span class="fs-count" id="fs-counter">0</span>
-            <span class="fs-label">Ads & Trackers Blocked</span>
-        </div>
-        <div class="fs-logs" id="fs-log-box">
-            <div style="color: #10b981; text-align: center; margin-top: 20px;">System Online. Scanning...</div>
-        </div>
-    </div>
-`;
+// Widget HTML Inject Karna (Mobile Safe Version)
+const widgetHTML = '<div id="floatshield-pro-widget" style="position:fixed; bottom:25px; right:25px; width:220px; background:#0f172a; border-radius:12px; padding:12px; color:white; z-index:999999; font-family:sans-serif; border:1px solid #3b82f6;"><div style="font-size:12px; font-weight:bold; color:#3b82f6;">🛡️ FloatShield Pro</div><div style="font-size:24px; font-weight:bold; color:#10b981; margin:5px 0;" id="fs-counter">0</div><div style="font-size:10px; color:#94a3b8;">Ads Blocked</div></div>';
 
-// Inject into page
 const container = document.createElement('div');
 container.innerHTML = widgetHTML;
 document.body.appendChild(container);
 
-// Close button working
-document.getElementById('fs-close').addEventListener('click', () => {
-    const widget = document.getElementById('floatshield-pro-widget');
-    widget.style.opacity = '0';
-    widget.style.transform = 'translateY(20px)';
-    setTimeout(() => widget.remove(), 300);
-});
-
-// 2. The Ad Blocker Brain
 let totalBlocked = 0;
 const counterEl = document.getElementById('fs-counter');
-const logBox = document.getElementById('fs-log-box');
-let isFirstLog = true;
 
-// Naye aur advance ad targets
+// Agresive Ad Selectors
 const adSelectors = [
-    '.ad', '.ads', '.adsbygoogle', '.banner-ad', '.sponsored',
-    '.taboola', '.outbrain', '.mgid', 
-    '#ad', 'iframe[src*="doubleclick"]', 'iframe[src*="amazon-adsystem"]',
-    'iframe[src*="criteo"]', 'div[id^="google_ads"]'
+    'iframe[src*="ad"]', 'iframe[src*="doubleclick"]', 
+    'div[class*="ad-"]', 'div[id*="ad-"]', 
+    '.adsbygoogle', '.sponsored', '.ad-slot',
+    'div[data-ad-slot]'
 ];
 
-function huntAds() {
-    let freshlyBlocked = 0;
-
+function removeAds() {
     adSelectors.forEach(selector => {
-        const targets = document.querySelectorAll(selector);
-        
-        targets.forEach(ad => {
-            if (ad.style.display !== 'none') {
-                // Kill the ad
-                ad.style.display = 'none';
-                ad.remove();
-                
+        document.querySelectorAll(selector).forEach(el => {
+            if (el.style.display !== 'none') {
+                el.style.display = 'none';
+                el.remove();
                 totalBlocked++;
-                freshlyBlocked++;
-
-                // Clear "System online" message on first block
-                if(isFirstLog) {
-                    logBox.innerHTML = '';
-                    isFirstLog = false;
-                }
-
-                // Add to premium log
-                const logItem = document.createElement('div');
-                logItem.className = 'fs-log-item';
-                
-                // Format the name nicely
-                let cleanName = selector.replace(/[.#\[\]^="]/g, '').substring(0, 15);
-                
-                logItem.innerHTML = `<span class="fs-log-tag">Blocked</span> <span>${cleanName}</span>`;
-                logBox.prepend(logItem); // Naya log upar aayega
+                if(counterEl) counterEl.innerText = totalBlocked;
             }
         });
     });
-
-    // Update Counter beautifully
-    if (freshlyBlocked > 0) {
-        counterEl.innerText = totalBlocked;
-        // Chota sa bounce animation effect count update hone par
-        counterEl.style.transform = 'scale(1.2)';
-        setTimeout(() => { counterEl.style.transform = 'scale(1)'; }, 150);
-    }
 }
 
-// 3. Start Engine
-setTimeout(huntAds, 1000); // Pehla attack 1 second baad
-setInterval(huntAds, 2500); // Phir har 2.5 second me background scan
+// 🛡️ THE SECURITY GUARD (MutationObserver)
+const observer = new MutationObserver(() => {
+    removeAds();
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Initial run
+removeAds();
