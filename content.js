@@ -8,7 +8,7 @@ document.body.appendChild(container);
 let totalBlocked = 0;
 const counterEl = document.getElementById('fs-counter');
 
-// Agresive Ad Selectors
+// 1. Normal Website Banner Ads
 const adSelectors = [
     'iframe[src*="ad"]', 'iframe[src*="doubleclick"]', 
     'div[class*="ad-"]', 'div[id*="ad-"]', 
@@ -16,7 +16,7 @@ const adSelectors = [
     'div[data-ad-slot]'
 ];
 
-function removeAds() {
+function removeNormalAds() {
     adSelectors.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => {
             if (el.style.display !== 'none') {
@@ -29,15 +29,47 @@ function removeAds() {
     });
 }
 
-// 🛡️ THE SECURITY GUARD (MutationObserver)
-const observer = new MutationObserver(() => {
-    removeAds();
-});
+// 2. 🚀 YouTube Special Ad Skipper Engine
+function killYouTubeAds() {
+    // Auto-click Skip Button instantly
+    const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button');
+    if (skipBtn) {
+        skipBtn.click();
+        totalBlocked++;
+        if(counterEl) counterEl.innerText = totalBlocked;
+    }
 
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
+    // Fast-Forward Unskippable Video Ads to the end
+    const video = document.querySelector('video');
+    const adShowing = document.querySelector('.ad-showing');
+    if (adShowing && video && !isNaN(video.duration)) {
+        // Ad ko seedha last second par bhej do
+        video.currentTime = video.duration; 
+    }
+
+    // Hide YouTube Mobile Banner Ads
+    const ytBanners = document.querySelectorAll('ytm-companion-ad-renderer, ytm-promoted-sparkles-web-renderer, ad-slot-renderer, ytd-ad-slot-renderer');
+    ytBanners.forEach(ad => {
+        if (ad.style.display !== 'none') {
+            ad.style.display = 'none';
+            totalBlocked++;
+            if(counterEl) counterEl.innerText = totalBlocked;
+        }
+    });
+}
+
+// Security Guard (MutationObserver for Normal Websites)
+const observer = new MutationObserver(() => {
+    removeNormalAds();
 });
+observer.observe(document.body, { childList: true, subtree: true });
+
+// YouTube requires a fast timer because it constantly changes
+setInterval(() => {
+    if (window.location.hostname.includes("youtube.com")) {
+        killYouTubeAds();
+    }
+}, 300); // Har 0.3 seconds mein attack karega
 
 // Initial run
-removeAds();
+removeNormalAds();
