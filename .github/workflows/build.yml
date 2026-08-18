@@ -1,4 +1,4 @@
-name: Build and Release APK
+name: Build Native APK
 
 on:
   workflow_dispatch:
@@ -19,19 +19,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Package Extension
-        run: |
-          mkdir -p output
-          zip -r output/FloatShield-Extension.zip . -x "*.git*"
+      - name: Setup Gradle Wrapper
+        run: gradle wrapper
 
-      - name: Create Release & Upload Asset
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.0
-          name: FloatShield Release v1.0.0
-          body: |
-            ## FloatShield Official Release 🎉
-            - Ad-blocker Engine Integrated
-          files: output/FloatShield-Extension.zip
+          tag_name: v2.0.0
+          name: FloatShield Native App v2.0.0
+          files: app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
