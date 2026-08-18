@@ -1,0 +1,27 @@
+name: Package Extension ZIP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Extension ZIP
+        run: |
+          zip -r FloatShield-Extension-v2.0.zip . -x "*.git*" ".github/*" "README.md"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v2.0.0
+          name: FloatShield Extension v2.0.0
+          files: FloatShield-Extension-v2.0.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
