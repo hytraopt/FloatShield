@@ -1,0 +1,42 @@
+name: Build and Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build WebToAPK
+        run: |
+          mkdir -p output
+          echo "Building FloatShield APK Package..."
+          zip -r output/FloatShield-Extension.zip . -x "*.git*"
+
+      - name: Create Release & Upload Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.0
+          name: FloatShield Release v1.0.0
+          body: |
+            ## FloatShield Official Release 🎉
+            - Ad-blocker Engine Integrated
+            - Download package below
+          files: output/FloatShield-Extension.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
