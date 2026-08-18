@@ -1,26 +1,24 @@
 // ==========================================
-// 🛡️ FloatShield Pro - Enhanced Edition
+// 🛡️ FloatShield Pro - Mobile Optimized Edition
 // ==========================================
 
 let totalBlocked = 0;
-let widgetInjected = false;
 
-// 1. Inject Widget Safely
+// 1. 🟢 Inject a "Chota Sa" (Tiny) Widget
 function injectWidget() {
-    if (document.getElementById('floatshield-pro-widget')) return;
+    // If it already exists, don't inject again
+    if (document.getElementById('fs-mini-widget')) return;
 
     const widgetHTML = `
-        <div id="floatshield-pro-widget" style="position:fixed; bottom:25px; right:25px; width:220px; background:#0f172a; border-radius:12px; padding:12px; color:white; z-index:2147483647; font-family:sans-serif; border:1px solid #3b82f6; pointer-events:none; box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
-            <div style="font-size:12px; font-weight:bold; color:#3b82f6;">🛡️ FloatShield Pro</div>
-            <div style="font-size:24px; font-weight:bold; color:#10b981; margin:5px 0;" id="fs-counter">${totalBlocked}</div>
-            <div style="font-size:10px; color:#94a3b8;">Ads Blocked</div>
+        <div id="fs-mini-widget" style="position:fixed; bottom:15px; right:15px; background:rgba(15,23,42,0.85); border:1px solid #3b82f6; border-radius:25px; padding:6px 12px; color:#10b981; z-index:2147483647; font-family:sans-serif; font-size:12px; font-weight:bold; display:flex; align-items:center; gap:5px; pointer-events:none; box-shadow:0px 4px 10px rgba(0,0,0,0.4); backdrop-filter:blur(4px);">
+            <span>🛡️</span>
+            <span id="fs-counter">${totalBlocked}</span>
         </div>
     `;
 
     const container = document.createElement('div');
     container.innerHTML = widgetHTML;
-    document.documentElement.appendChild(container); // Appending to HTML rather than Body helps bypass some site resets
-    widgetInjected = true;
+    document.documentElement.appendChild(container); 
 }
 
 function updateCounter() {
@@ -28,12 +26,13 @@ function updateCounter() {
     if (counterEl) counterEl.innerText = totalBlocked;
 }
 
-// 2. Normal Website Banner Ads
+// 2. 🚫 Normal Website & Mobile Banner Ads
 const adSelectors = [
     'iframe[src*="ad"]', 'iframe[src*="doubleclick"]', 
-    'div[class*="ad-"]', 'div[id*="ad-"]', 
-    '.adsbygoogle', '.sponsored', '.ad-slot',
-    'div[data-ad-slot]', '.taboola-container'
+    '.ad-slot', 'div[data-ad-slot]', 
+    'ytm-companion-ad-renderer', // Mobile banners
+    'ytm-promoted-sparkles-web-renderer',
+    'ytm-promoted-video-renderer'
 ];
 
 function removeNormalAds() {
@@ -52,47 +51,38 @@ function removeNormalAds() {
     if (blockedThisRun) updateCounter();
 }
 
-// 3. 🚀 Advanced YouTube Special Ad Skipper Engine
+// 3. 🚀 Advanced YouTube Mobile & Desktop Ad Skipper
 function killYouTubeAds() {
     let blockedThisRun = false;
 
-    // A. Auto-click Skip Button instantly (Includes new YouTube selectors)
-    const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button, .ytp-ad-text.ytp-ad-skip-button-text');
-    if (skipBtn) {
-        skipBtn.click();
+    // A. Auto-click Skip Button (Includes mobile classes)
+    const skipButtons = document.querySelectorAll('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-skip-ad-button, .ytp-ad-text.ytp-ad-skip-button-text, .ytp-ad-skip-button-slot');
+    skipButtons.forEach(btn => {
+        btn.click();
         totalBlocked++;
         blockedThisRun = true;
-    }
+    });
 
-    // B. Fast-Forward Unskippable Video Ads (Safer Method)
-    const adShowing = document.querySelector('.ad-showing, .ad-interrupting');
+    // B. Fast-Forward Unskippable Ads (Mobile specific triggers added)
+    // On mobile web, 'ad-showing' isn't always reliable. We also look for overlay banners.
+    const isAdPlaying = document.querySelector('.ad-showing, .ad-interrupting, .ytp-ad-player-overlay, .ytp-ad-persistent-progress-bar, [id^="ad-text:"]');
     const video = document.querySelector('video');
     
-    // Check if the ad player wrapper exists and video is playing an ad
-    if (adShowing && video) {
+    if (isAdPlaying && video) {
         if (!isNaN(video.duration) && video.currentTime < video.duration - 0.5) {
-            video.muted = true; // Mute the ad
-            video.playbackRate = 16.0; // Speed it up immensely (safer than skipping straight to the end)
-            video.currentTime = video.duration - 0.1; // Jump to the very last millisecond
+            video.muted = true; // Mute it instantly
+            video.playbackRate = 16.0; // Max speed
+            video.currentTime = video.duration - 0.1; // Jump to the end
             totalBlocked++;
             blockedThisRun = true;
         }
     }
 
-    // C. Hide YouTube Mobile/Desktop Banner Ads & Popups
-    const ytBanners = document.querySelectorAll(`
-        ytm-companion-ad-renderer, 
-        ytm-promoted-sparkles-web-renderer, 
-        ytd-ad-slot-renderer, 
-        ytd-banner-promo-renderer, 
-        ytd-player-legacy-desktop-watch-ads-renderer, 
-        .ytd-in-feed-ad-layout-renderer,
-        .ytp-ad-overlay-container
-    `);
-    
-    ytBanners.forEach(ad => {
-        if (ad.style.display !== 'none') {
-            ad.style.display = 'none';
+    // C. Hide annoying "Sponsored" overlays on mobile players
+    const mobileOverlays = document.querySelectorAll('.ytp-ad-overlay-container, .ytp-ad-message-container');
+    mobileOverlays.forEach(el => {
+        if (el.style.display !== 'none') {
+            el.style.display = 'none';
             totalBlocked++;
             blockedThisRun = true;
         }
@@ -101,21 +91,20 @@ function killYouTubeAds() {
     if (blockedThisRun) updateCounter();
 }
 
-// 4. Engine Initialization & Event Loops
+// 4. ⚙️ Engine Initialization
 
-// Ensure widget is loaded even if the site clears the body
+// Keep widget alive if the site tries to delete it
 injectWidget();
 setInterval(() => {
-    if (!document.getElementById('floatshield-pro-widget')) {
+    if (!document.getElementById('fs-mini-widget')) {
         injectWidget();
     }
 }, 2000);
 
-// Security Guard (MutationObserver for Normal Websites)
+// Watch for standard ads popping up
 const observer = new MutationObserver(() => {
     removeNormalAds();
 });
-// Observe document body once it exists
 if (document.body) {
     observer.observe(document.body, { childList: true, subtree: true });
 } else {
@@ -124,10 +113,10 @@ if (document.body) {
     });
 }
 
-// YouTube fast-attack timer (Kept at 300ms)
+// YouTube requires aggressive checking (300ms)
 if (window.location.hostname.includes("youtube.com")) {
     setInterval(killYouTubeAds, 300);
 }
 
-// Initial run
+// Run once immediately
 removeNormalAds();
