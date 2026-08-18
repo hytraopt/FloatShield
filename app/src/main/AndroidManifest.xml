@@ -8,9 +8,11 @@
         android:allowBackup="true"
         android:label="FloatShield"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
         <activity
-            android:name=".MainActivity"
+            android:name="com.floatshield.app.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
