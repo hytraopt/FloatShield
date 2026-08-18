@@ -1,20 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "FloatShield Pro",
-  "version": "2.0",
-  "description": "Premium floating ad-blocker with a modern glass UI.",
+  "name": "FloatShield Pro Ad Blocker",
+  "version": "1.0",
+  "description": "Blocks normal ads and automatically skips YouTube ads.",
   "permissions": [
     "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
   ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "css": ["floating.css"],
       "js": ["content.js"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ]
 }
