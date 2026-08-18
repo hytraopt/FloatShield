@@ -3,7 +3,7 @@
 
     let adsBlockedCount = 0;
 
-    // 1. Create Floating Badge for "Ads Detected" Counter
+    // 1. Floating Badge
     function createBadge() {
         if (document.getElementById('floatshield-badge')) return;
         
@@ -15,16 +15,16 @@
             right: 20px;
             background: #111827;
             color: #10B981;
-            padding: 10px 16px;
+            padding: 8px 14px;
             border-radius: 30px;
             font-family: sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
             z-index: 999999;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             border: 1px solid #10B981;
             pointer-events: none;
         `;
@@ -35,17 +35,16 @@
     function updateBadgeCount(count) {
         adsBlockedCount += count;
         const countEl = document.getElementById('shield-count');
-        if (countEl) {
-            countEl.innerText = adsBlockedCount;
-        }
+        if (countEl) countEl.innerText = adsBlockedCount;
     }
 
-    // 2. Hide Banner/Overlay Ads Without Breaking Video Players
+    // 2. Safe Ad Hiding (Banner & Popups Only)
     const AD_SELECTORS = [
         'div[class*="ad-"]', 'div[class*="ads-"]', 'div[class*="advert"]',
         'iframe[src*="doubleclick"]', 'iframe[src*="googleads"]', 'iframe[src*="adnxs"]',
         'ins.adsbygoogle', 'aside[class*="ad"]', 'div[id*="google_ads"]',
-        'a[href*="googleads"]', 'div[data-ad-unit]', '.sponsor-post', '.promoted-content'
+        'a[href*="googleads"]', 'div[data-ad-unit]', '.sponsor-post', '.promoted-content',
+        'ytm-promoted-sparkles-web-renderer', 'ytm-companion-ad-renderer', '.ytp-ad-overlay-container'
     ];
 
     function hideAds() {
@@ -54,34 +53,35 @@
             const elements = document.querySelectorAll(selector);
             elements.forEach(el => {
                 if (el.style.display !== 'none') {
-                    el.style.display = 'none'; // Safe hiding (Doesn't break player)
+                    el.style.display = 'none';
                     found++;
                 }
             });
         });
 
-        // 3. Auto-Skip Video Ads (Fast-Forward instead of deleting)
-        const video = document.querySelector('video');
-        const skipButton = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
-        const adShowing = document.querySelector('.ad-showing, .ytp-ad-self-ad-overlay');
-
-        if (skipButton) {
-            skipButton.click();
+        // 3. YouTube Mobile Specific Safe Skip
+        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button');
+        if (skipBtn) {
+            skipBtn.click();
             found++;
         }
 
-        if (adShowing && video) {
-            video.currentTime = video.duration || 999; // Skip to end of ad
+        // Fast-forward ONLY if ad video explicitly exists (Prevents Main Video Blackout)
+        const adPlayer = document.querySelector('.ad-created, .ad-showing');
+        const video = document.querySelector('video');
+        if (adPlayer && video && !isNaN(video.duration)) {
+            video.playbackRate = 16.0; // Fast speed through ad without breaking main video
             video.muted = true;
             found++;
+        } else if (video && video.playbackRate === 16.0) {
+            video.playbackRate = 1.0; // Reset normal speed for main video
+            video.muted = false;
         }
 
-        if (found > 0) {
-            updateBadgeCount(found);
-        }
+        if (found > 0) updateBadgeCount(found);
     }
 
-    // 4. Initialize Shield
+    // 4. Initialize
     function init() {
         createBadge();
         hideAds();
