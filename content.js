@@ -3,10 +3,10 @@
 
     let adsBlockedCount = 0;
 
-    // 1. Clean Floating Badge
+    // 1. Create Floating Badge
     function createBadge() {
         if (document.getElementById('floatshield-badge')) return;
-        
+
         const badge = document.createElement('div');
         badge.id = 'floatshield-badge';
         badge.style.cssText = `
@@ -38,25 +38,29 @@
         if (countEl) countEl.innerText = adsBlockedCount;
     }
 
-    // 2. Safe CSS Injection (Hides Banners & Ads without touching Video Stream)
+    // 2. CSS Injector Engine (Safely removes ad elements without breaking HTML5 Video Player)
     const style = document.createElement('style');
     style.innerHTML = `
+        /* General Ads */
         div[class*="ad-"], div[class*="ads-"], div[class*="advert"],
         iframe[src*="doubleclick"], iframe[src*="googleads"], iframe[src*="adnxs"],
         ins.adsbygoogle, aside[class*="ad"], div[id*="google_ads"],
         a[href*="googleads"], div[data-ad-unit], .sponsor-post, .promoted-content,
+        
+        /* YouTube Mobile Ad Containers */
         ytm-promoted-sparkles-web-renderer, ytm-companion-ad-renderer,
-        .ytp-ad-overlay-container, ytm-promoted-sparkles-text-search-renderer,
-        ytm-statement-banner-renderer {
+        ytm-promoted-sparkles-text-search-renderer, ytm-statement-banner-renderer,
+        .ytp-ad-overlay-container, .ytp-ad-message-container,
+        ytm-single-column-browse-results-renderer[page-subtype="home"] ytm-item-section-renderer:has(ytm-promoted-video-renderer) {
             display: none !important;
         }
     `;
     (document.head || document.documentElement).appendChild(style);
 
-    // 3. Skip Button Auto-Clicker
-    function autoClickSkip() {
+    // 3. Fast Skip Button Trigger
+    function handleSkipButtons() {
         const skipButtons = document.querySelectorAll(
-            '.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button, .ytp-ad-skip-button-slot'
+            '.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button, .ytp-ad-skip-button-slot, .videoAdUiSkipButton'
         );
 
         skipButtons.forEach(btn => {
@@ -67,13 +71,13 @@
         });
     }
 
-    // 4. Initialize
+    // 4. Initialize Shield
     function init() {
         createBadge();
-        autoClickSkip();
+        handleSkipButtons();
 
         const observer = new MutationObserver(() => {
-            autoClickSkip();
+            handleSkipButtons();
         });
 
         if (document.body) {
