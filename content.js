@@ -3,7 +3,7 @@
 
     let adsBlockedCount = 0;
 
-    // 1. Create Floating Badge
+    // 1. Floating Badge
     function createBadge() {
         if (document.getElementById('floatshield-badge')) return;
 
@@ -38,51 +38,44 @@
         if (countEl) countEl.innerText = adsBlockedCount;
     }
 
-    // 2. CSS Injector Engine (Safely removes ad elements without breaking HTML5 Video Player)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        /* General Ads */
-        div[class*="ad-"], div[class*="ads-"], div[class*="advert"],
-        iframe[src*="doubleclick"], iframe[src*="googleads"], iframe[src*="adnxs"],
-        ins.adsbygoogle, aside[class*="ad"], div[id*="google_ads"],
-        a[href*="googleads"], div[data-ad-unit], .sponsor-post, .promoted-content,
-        
-        /* YouTube Mobile Ad Containers */
-        ytm-promoted-sparkles-web-renderer, ytm-companion-ad-renderer,
-        ytm-promoted-sparkles-text-search-renderer, ytm-statement-banner-renderer,
-        .ytp-ad-overlay-container, .ytp-ad-message-container,
-        ytm-single-column-browse-results-renderer[page-subtype="home"] ytm-item-section-renderer:has(ytm-promoted-video-renderer) {
-            display: none !important;
-        }
-    `;
-    (document.head || document.documentElement).appendChild(style);
+    // 2. Safe Banner & Popup Selector Removal (Strictly Avoids Video Player)
+    const AD_SELECTORS = [
+        'div[class*="ad-slot"]', 'div[class*="ad-banner"]', 'iframe[src*="doubleclick"]',
+        'iframe[src*="googleads"]', 'ins.adsbygoogle', 'ytm-promoted-sparkles-web-renderer',
+        'ytm-companion-ad-renderer', 'ytm-promoted-sparkles-text-search-renderer'
+    ];
 
-    // 3. Fast Skip Button Trigger
-    function handleSkipButtons() {
-        const skipButtons = document.querySelectorAll(
-            '.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button, .ytp-ad-skip-button-slot, .videoAdUiSkipButton'
-        );
-
-        skipButtons.forEach(btn => {
-            if (btn && typeof btn.click === 'function') {
-                btn.click();
-                updateBadgeCount(1);
-            }
+    function removeExternalAds() {
+        let count = 0;
+        AD_SELECTORS.forEach(selector => {
+            const els = document.querySelectorAll(selector);
+            els.forEach(el => {
+                if (el && el.style.display !== 'none') {
+                    el.style.display = 'none';
+                    count++;
+                }
+            });
         });
+
+        // Safe Auto-Skip Button Click
+        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button');
+        if (skipBtn) {
+            skipBtn.click();
+            count++;
+        }
+
+        if (count > 0) {
+            updateBadgeCount(count);
+        }
     }
 
-    // 4. Initialize Shield
+    // 3. Initialize
     function init() {
         createBadge();
-        handleSkipButtons();
+        removeExternalAds();
 
-        const observer = new MutationObserver(() => {
-            handleSkipButtons();
-        });
-
-        if (document.body) {
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
+        // Interval approach avoids heavy DOM mutation locks on video stream
+        setInterval(removeExternalAds, 1000);
     }
 
     if (document.readyState === 'loading') {
