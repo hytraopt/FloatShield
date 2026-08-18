@@ -38,15 +38,18 @@
         if (countEl) countEl.innerText = adsBlockedCount;
     }
 
-    // 2. Safe Banner & Popup Selector Removal (Strictly Avoids Video Player)
+    // 2. Hide Page Banner Ads
     const AD_SELECTORS = [
         'div[class*="ad-slot"]', 'div[class*="ad-banner"]', 'iframe[src*="doubleclick"]',
         'iframe[src*="googleads"]', 'ins.adsbygoogle', 'ytm-promoted-sparkles-web-renderer',
-        'ytm-companion-ad-renderer', 'ytm-promoted-sparkles-text-search-renderer'
+        'ytm-companion-ad-renderer', 'ytm-promoted-sparkles-text-search-renderer',
+        'ytm-statement-banner-renderer', '.ytp-ad-overlay-container'
     ];
 
-    function removeExternalAds() {
+    function blockAds() {
         let count = 0;
+
+        // Hide Banner Ads
         AD_SELECTORS.forEach(selector => {
             const els = document.querySelectorAll(selector);
             els.forEach(el => {
@@ -57,10 +60,20 @@
             });
         });
 
-        // Safe Auto-Skip Button Click
-        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button');
+        // 3. Skip Video Ads Automatically (Zero Blackscreen)
+        const video = document.querySelector('video');
+        const isAdShowing = document.querySelector('.ad-showing, .ad-interrupting, .ytp-ad-player-overlay');
+        const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytm-ad-skip-button, .ytp-ad-skip-button-slot');
+
+        // Click Skip Button if available
         if (skipBtn) {
             skipBtn.click();
+            count++;
+        }
+
+        // Fast-Forward Video Ad to End instantly
+        if (isAdShowing && video && !isNaN(video.duration) && video.duration > 0) {
+            video.currentTime = video.duration - 0.1;
             count++;
         }
 
@@ -69,13 +82,11 @@
         }
     }
 
-    // 3. Initialize
+    // 4. Initialize Engine
     function init() {
         createBadge();
-        removeExternalAds();
-
-        // Interval approach avoids heavy DOM mutation locks on video stream
-        setInterval(removeExternalAds, 1000);
+        blockAds();
+        setInterval(blockAds, 500); // Fast check every 500ms
     }
 
     if (document.readyState === 'loading') {
