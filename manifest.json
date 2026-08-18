@@ -1,16 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "FloatShield Pro Ad Blocker",
-  "version": "1.0",
-  "description": "Blocks normal ads and automatically skips YouTube ads.",
+  "name": "FloatShield - Ad & Tracker Blocker",
+  "version": "2.0",
+  "description": "Advanced Floating Shield for Aggressive Ad-Blocking, Anti-AdBlock Bypass, and Privacy Protection.",
   "permissions": [
-    "scripting"
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_idle"
+      "css": ["floating.css"],
+      "run_at": "document_start"
     }
   ]
 }
